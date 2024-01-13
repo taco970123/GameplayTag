@@ -1,0 +1,211 @@
+.folderView {
+    border-top-width: 1px;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 1px;
+    border-left-color: rgb(32, 32, 32);
+    border-right-color: rgb(32, 32, 32);
+    border-top-color: rgb(32, 32, 32);
+    border-bottom-color: rgb(32, 32, 32);
+}
+
+#top {
+    margin-left: 25px;
+    flex-direction: row;
+}
+
+.hasChild#top {
+    margin-left: 0;
+}
+
+#top .m_label {
+}
+
+#top .m_button {
+    width: 25px;
+    height: 25px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    flex-shrink: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+#top .m_button:hover {
+    background-color: rgb(200, 200, 200);
+    -unity-background-image-tint-color: rgb(26, 26, 26);
+}
+
+#top .m_button:active {
+    background-color: rgba(0, 0, 0, 0);
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+#folder-button {
+    display: none;
+}
+
+.hasChild > #folder-button {
+    display: flex;
+}
+
+.expanded#folder-button {
+    background-image: resource('Icon/d_icon dropdown@2x');
+}
+
+.collapsed#folder-button {
+    background-image: resource('Icon/d_icon dropdown close@2x');
+}
+
+#folder-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.expanded#folder-icon {
+    background-image: resource('Icon/d_FolderOpened Icon');
+}
+
+.collapsed#folder-icon {
+    background-image: resource('Icon/d_Folder Icon');
+}
+
+#folder-title {
+    margin-left: 1px;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 0;
+    padding-bottom: 0;
+    -unity-text-align: middle-left;
+    display: flex;
+    color: rgb(200, 200, 200);
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.renaming > #folder-title {
+    display: none;
+}
+
+.moving#folder-title {
+    border-left-color: rgb(200, 200, 200);
+    border-right-color: rgb(200, 200, 200);
+    border-top-color: rgb(200, 200, 200);
+    border-bottom-color: rgb(200, 200, 200);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+}
+
+#folder-detail-label {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 5px;
+    padding-bottom: 0;
+    padding-left: 5px;
+    -unity-text-align: middle-right;
+    color: rgb(88, 88, 88);
+    display: none;
+    overflow: hidden;
+    flex-shrink: 1;
+}
+
+.renaming > #folder-detail-label {
+    display: none;
+}
+
+#folder-rename-field {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 1px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    display: none;
+    flex-grow: 1;
+}
+
+.renaming > #folder-rename-field {
+    display: flex;
+}
+
+.unity-text-field__input {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 2px;
+    background-color: rgba(0, 0, 0, 0);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.unity-text-field__input:hover {
+    background-color: rgb(200, 200, 200);
+    color: rgb(27, 27, 27);
+}
+
+#confirm-button {
+    display: none;
+    background-image: resource('Icon/d_Valid@2x');
+}
+
+.renaming > #confirm-button {
+    display: flex;
+}
+
+#option-button {
+    background-image: resource('Icon/d__Popup@2x');
+    display: none;
+}
+
+.optional#option-button {
+    display: flex;
+}
+
+.renaming > #option-button {
+    display: none;
+}
+
+#content {
+    margin-left: 25px;
+}
+
+.expanded#content {
+}
+
+.collapsed#content {
+    display: none;
+}

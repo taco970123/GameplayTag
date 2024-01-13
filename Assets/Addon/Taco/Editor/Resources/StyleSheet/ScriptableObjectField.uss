@@ -1,0 +1,47 @@
+.scriptableObjectField {
+    flex-grow: 1;
+    flex-shrink: 1;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-left-color: rgb(32, 32, 32);
+    border-right-color: rgb(32, 32, 32);
+    border-top-color: rgb(32, 32, 32);
+    border-bottom-color: rgb(32, 32, 32);
+    margin-right: -2px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-right: 10px;
+    padding-left: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+#top {
+}
+
+#title {
+    -unity-font-style: bold;
+    padding-bottom: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-left: 0;
+    -unity-text-align: middle-left;
+}
+
+#objectField {
+    flex-grow: 1;
+}
+
+#scriptableObjectView {
+    border-top-color: rgb(42, 42, 42);
+    border-top-width: 1px;
+    margin-top: 10px;
+    padding-bottom: 0;
+    padding-top: 10px;
+}

@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Addon/TreeDesigner/Editor/Resources/StyleSheet/EnumMenu.uss?fileID=7433441132597879392&amp;guid=5b38868001063984e8bf159c8cbc10f6&amp;type=3#EnumMenu" />
+    <ui:VisualElement name="root">
+        <ui:Label display-tooltip-when-elided="true" name="label" text="Label" />
+        <ui:Label text="Context" display-tooltip-when-elided="true" name="title" />
+    </ui:VisualElement>
+</ui:UXML>

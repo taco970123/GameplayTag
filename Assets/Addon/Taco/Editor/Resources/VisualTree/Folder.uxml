@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Addon/Taco/Editor/Resources/StyleSheet/Folder.uss?fileID=7433441132597879392&amp;guid=e1ac16046f8464d46adc83917aee5bbc&amp;type=3#Folder" />
+    <ui:VisualElement name="top">
+        <ui:VisualElement name="folder-button" class="m_button" />
+        <ui:VisualElement name="folder-icon" />
+        <ui:Label display-tooltip-when-elided="true" name="folder-title" text="Folder Name" class="m_label" />
+        <ui:Label tabindex="-1" text="DetailPath" parse-escape-sequences="true" display-tooltip-when-elided="true" name="folder-detail-label" class="m_label" />
+        <ui:TextField picking-mode="Ignore" value="Folder Name" name="folder-rename-field" />
+        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="confirm-button" class="m_button" />
+        <ui:VisualElement name="option-button" class="m_button" />
+    </ui:VisualElement>
+    <ui:VisualElement name="content" />
+</ui:UXML>

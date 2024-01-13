@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Addon/TacoEditor/Gameplay/Editor/Resources/StyleSheet/GameplayTagSelectWindow.uss?fileID=7433441132597879392&amp;guid=1fa354665238ace4e837d40359b54c66&amp;type=3#GameplayTagSelectWindow" />
+    <ui:ScrollView>
+        <ui:VisualElement name="tag-container" />
+    </ui:ScrollView>
+    <ui:VisualElement name="tool">
+        <ui:VisualElement name="expand-all-bar" class="m_toolbar">
+            <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="expand-all-button" class="m_button" />
+            <ui:Label tabindex="-1" text="Expand All" parse-escape-sequences="true" display-tooltip-when-elided="true" name="expand-all-label" class="m_label" />
+        </ui:VisualElement>
+        <ui:VisualElement name="clear-selection-bar" class="m_toolbar">
+            <ui:Button text="&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" name="clear-selection-button" class="m_button" />
+            <ui:Label tabindex="-1" text="Clear Selection&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" name="clear-selection-label" class="m_label" />
+        </ui:VisualElement>
+        <ui:VisualElement name="open-editor-bar" class="m_toolbar" style="flex-grow: 1;">
+            <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="open-editor-button" class="m_button" />
+            <ui:Label tabindex="-1" text="Open Tag Editor Window" parse-escape-sequences="true" display-tooltip-when-elided="true" name="open-editor-label" class="m_label" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

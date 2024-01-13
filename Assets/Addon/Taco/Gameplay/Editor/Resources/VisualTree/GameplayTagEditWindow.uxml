@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Addon/Taco/Gameplay/Editor/Resources/StyleSheet/GameplayTagEditWindow.uss?fileID=7433441132597879392&amp;guid=11e490cad797a5a42a0f60d787f46c5d&amp;type=3#GameplayTagEditWindow" />
+    <ui:VisualElement name="create-space">
+        <ui:TextField picking-mode="Ignore" value="tag name" name="tag-name-field" />
+        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="add-tag-button" />
+    </ui:VisualElement>
+    <ui:ScrollView>
+        <ui:VisualElement name="tag-container" />
+    </ui:ScrollView>
+</ui:UXML>

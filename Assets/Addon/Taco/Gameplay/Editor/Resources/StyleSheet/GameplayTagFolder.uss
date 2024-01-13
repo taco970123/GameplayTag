@@ -1,0 +1,17 @@
+#folder-icon {
+    display: none;
+}
+
+#folder-title:hover {
+    background-color: rgb(200, 200, 200);
+    color: rgb(27, 27, 27);
+}
+
+#folder-title:active {
+    background-color: rgba(0, 0, 0, 0);
+    color: rgb(200, 200, 200);
+}
+
+#folder-detail-label {
+    display: flex;
+}
