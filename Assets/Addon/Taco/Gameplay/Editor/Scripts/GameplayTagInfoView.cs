@@ -28,8 +28,8 @@ namespace Taco.Gameplay.Editor
             m_ToggleButton.RegisterValueChangedCallback(i => OnToggled?.Invoke(i));
 
             m_MultiLabel = this.Q<Label>("multi-label");
-            if (GameplayTagEditorUtility.GameplayTagEditData.Contains(detailTag))
-                m_MultiLabel.text = GameplayTagEditorUtility.GameplayTagEditData[detailTag].Multi ? "Multi" : "Single";
+            if (GameplayTagEditorUtility.GameplayTagData.Contains(detailTag))
+                m_MultiLabel.text = GameplayTagEditorUtility.GameplayTagData[detailTag].Multi ? "Multi" : "Single";
 
             m_OptionButton.AddManipulator(new DropdownMenuManipulator((menu) =>
             {
@@ -38,7 +38,7 @@ namespace Taco.Gameplay.Editor
                     GUIUtility.systemCopyBuffer = detailTag;
                 });
 
-                if (GameplayTagEditorUtility.GameplayTagEditData[detailTag].Multi)
+                if (GameplayTagEditorUtility.GameplayTagData[detailTag].Multi)
                 {
                     menu.AppendAction("Turn to single", (a) =>
                     {

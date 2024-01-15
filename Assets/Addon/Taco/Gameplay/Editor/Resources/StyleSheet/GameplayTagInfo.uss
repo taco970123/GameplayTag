@@ -58,6 +58,10 @@
     color: rgb(255, 209, 102);
 }
 
+.runtime > #folder-title {
+    color: rgb(255, 209, 102);
+}
+
 #multi-label {
     margin-top: 0;
     margin-right: 5px;
@@ -83,6 +87,10 @@
     display: none;
 }
 
+.runtime > #multi-label {
+    display: none;
+}
+
 #option-button {
     border-top-width: 0;
     border-right-width: 0;
@@ -91,6 +99,10 @@
 }
 
 .missing > #option-button {
+    display: none;
+}
+
+.runtime > #option-button {
     display: none;
 }
 

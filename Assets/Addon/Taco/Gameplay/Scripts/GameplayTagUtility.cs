@@ -4,8 +4,10 @@ using UnityEngine;
 
 namespace Taco.Gameplay
 {
-    public static class GameplayTagUtility
+    public static partial class GameplayTagUtility
     {
+        public static GameplayTagData GameplayTagData;
+
         public static bool StartTagIs(this string tag,string targetTag)
         {
             if (tag == targetTag)
@@ -110,6 +112,13 @@ namespace Taco.Gameplay
             }
 
             return middleTags;
+        }
+
+        [RuntimeInitializeOnLoadMethod]
+        public static void RuntimeInit()
+        {
+            GameplayTagData = Resources.Load<GameplayTagData>("GameplayTagData");
+            GameplayTagData?.Init();
         }
     }
 }

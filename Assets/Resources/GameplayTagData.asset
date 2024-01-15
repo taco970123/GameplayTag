@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d2e1ee5bec931a45bb3ccc4d389f0a3, type: 3}
+  m_Name: GameplayTagData
+  m_EditorClassIdentifier: 
+  m_GameplayTagInfos:
+  - Name: A
+    Guid: c6d13940-8363-41ec-8cf1-c4dd0fcbc392
+    Expanded: 1
+    Multi: 0
+    Reference: []
+  - Name: A.A
+    Guid: 46077b05-119e-486f-9aa6-608e57d5069b
+    Expanded: 1
+    Multi: 0
+    Reference: []
+  - Name: A.A.A
+    Guid: e6e5d364-c10c-4c99-a278-a351b8c1207b
+    Expanded: 1
+    Multi: 0
+    Reference: []
+  - Name: A.A.A.A
+    Guid: 05a9764a-a33f-4b0c-bfa1-ef5f50eac788
+    Expanded: 1
+    Multi: 0
+    Reference:
+    - GlobalObjectId_V1-2-61845ab2f209eb54c82c18a0598ee8a3-2016122259-0/Tag

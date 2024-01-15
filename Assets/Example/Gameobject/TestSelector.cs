@@ -20,7 +20,7 @@ public class TestSelector : MonoBehaviour
         Units.ForEach(i => i.Select(false));
         foreach (var unit in Units)
         {
-            if (unit.Tag.Is(Selector))
+            if (unit.Tag.Contains(Selector))
                 unit.Select(true);
         }
     }

@@ -48,6 +48,10 @@ namespace Taco.Gameplay.Editor
             m_SelectButton = this.Q<Button>("select-tag-button");
 
             m_GameplayTagContainer = gameplayTagContainer;
+            m_GameplayTagContainer.ReferencePath = $"{GlobalObjectId.GetGlobalObjectIdSlow(owner)}/{fieldName}";
+            if (!Application.isPlaying)
+                m_GameplayTagContainer.Init();
+
             m_Owner = owner;
 
             m_SelectButton.clicked += () =>
@@ -73,18 +77,20 @@ namespace Taco.Gameplay.Editor
 
             PopulateView();
 
+
+            GameplayTagUtility.GameplayTagData.OnValueChanged += m_GameplayTagContainer.Init;
             m_GameplayTagContainer.OnValueChanged += PopulateView;
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
+            RegisterCallback<DetachFromPanelEvent>(OnDestroy);
         }
 
         void PopulateView()
-        {
+        {          
             m_TagContainer.Clear();
             m_TagContainer.text = "Empty";
-
             foreach (var tag in m_GameplayTagContainer.Tags)
             {
-                if (!m_GameplayTagContainer.HasChild(tag))
+                if (!m_GameplayTagContainer.HasChildTag(tag))
                 {
                     m_TagContainer.Add(new Label(tag));
                     m_TagContainer.text = string.Empty;
@@ -92,6 +98,11 @@ namespace Taco.Gameplay.Editor
             }
         }
 
+        void OnDestroy(DetachFromPanelEvent e)
+        {
+            GameplayTagUtility.GameplayTagData.OnValueChanged -= m_GameplayTagContainer.Init;
+            m_GameplayTagContainer.OnValueChanged -= PopulateView;
+        }
 
         float lastHeight;
         Rect lastRect;

@@ -23,11 +23,11 @@ public class Test : MonoBehaviour
     }
     public void Update()
     {
-        if (Tag.Is("运动状态.旋转"))
+        if (Tag.ContainsTag("运动状态.旋转"))
         {
             transform.RotateAround(transform.position, Axis, rotatingSpeed * Time.deltaTime);
         }
-        if (Tag.Is("运动状态.位移"))
+        if (Tag.ContainsTag("运动状态.位移"))
         {
             if(timer > 0)
             {
@@ -43,7 +43,17 @@ public class Test : MonoBehaviour
     }
     public void Select(bool value)
     {
-        
     }
     #endregion
+
+    [ContextMenu("AddRotate")]
+    public void AddRotate()
+    {
+        Tag.AddTagRuntime("运动状态.旋转");
+    }
+    [ContextMenu("RemoveRotate")]
+    public void RemoveRotate()
+    {
+        Tag.RemoveTagRuntime("运动状态.旋转");
+    }
 }

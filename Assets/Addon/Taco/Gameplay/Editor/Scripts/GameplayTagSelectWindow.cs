@@ -22,7 +22,7 @@ namespace Taco.Gameplay.Editor
         public System.Action OnClosed;
 
 
-        GameplayTagEditData m_EditData => GameplayTagEditorUtility.GameplayTagEditData;
+        GameplayTagData m_TagData => GameplayTagEditorUtility.GameplayTagData;
         GameplayTagContainer m_TagContainer => GameplayTagEditorUtility.GameplayTagContainer;
         Object m_GameplayTagContainerOwner => GameplayTagEditorUtility.GameplayTagContainerOwner;
 
@@ -36,7 +36,7 @@ namespace Taco.Gameplay.Editor
 
             m_ExpandAllButton = root.Q<Button>("expand-all-button");
             m_AllExpanded = true;
-            foreach (var tagEditInfo in m_EditData.GameplayTagEditInfos)
+            foreach (var tagEditInfo in m_TagData.GameplayTagInfos)
             {
                 if (!tagEditInfo.Expanded)
                     m_AllExpanded = false;
@@ -66,7 +66,7 @@ namespace Taco.Gameplay.Editor
 
 
             m_ClearSelectionButton = root.Q<Button>("clear-selection-button");
-            m_ClearSelectionButton.clicked += () => m_UndoHelper.Do(() => m_EditData.GameplayTagEditInfos.ForEach(i => m_TagContainer.RemoveTag(i.Name)), "Clear Selected Tags");
+            m_ClearSelectionButton.clicked += () => m_UndoHelper.Do(() => m_TagContainer.ClearTags(), "Clear Selected Tags");
 
             m_OpenTagEditorButton = root.Q<Button>("open-editor-button");
             if (!HasOpenInstances<GameplayTagEditWindow>())
@@ -81,10 +81,11 @@ namespace Taco.Gameplay.Editor
 
             m_Container = root.Q("tag-container");
 
-            m_UndoHelper = new UndoHelper("GameplayTagContainer", m_GameplayTagContainerOwner, UndoRedo);
+            m_UndoHelper = new UndoHelper("GameplayTagContainer", UndoRedo, m_GameplayTagContainerOwner, m_TagData);
             GameplayTagEditorUtility.RegisterUndo(null);
             Selection.selectionChanged += Close;
-            m_EditData.OnValueChanged += PopulateView;
+            EditorApplication.playModeStateChanged += OnPlayModeChanged;
+            m_TagData.OnValueChanged += PopulateView;
             m_TagContainer.OnValueChanged += PopulateView;
 
             PopulateView();
@@ -95,7 +96,8 @@ namespace Taco.Gameplay.Editor
             m_UndoHelper?.Dispose();
             GameplayTagEditorUtility.UnregisterUndo(null);
             Selection.selectionChanged -= Close;
-            m_EditData.OnValueChanged -= PopulateView;
+            EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+            m_TagData.OnValueChanged -= PopulateView;
             m_TagContainer.OnValueChanged -= PopulateView;
             rootVisualElement.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
 
@@ -104,9 +106,9 @@ namespace Taco.Gameplay.Editor
         }
         private void Update()
         {
-            if (focusedWindow != this && focusedWindow as GameplayTagEditWindow == null && focusedWindow.GetType().ToString() != "UnityEditor.UIElements.EditorMenuExtensions+ContextMenu")
+            if (focusedWindow != null && focusedWindow != this && focusedWindow as GameplayTagEditWindow == null && focusedWindow.GetType().ToString() != "UnityEditor.UIElements.EditorMenuExtensions+ContextMenu")
             {
-                EditorApplication.delayCall += Close;
+                Close();
             }
             if (EditorApplication.isCompiling)
             {
@@ -119,15 +121,15 @@ namespace Taco.Gameplay.Editor
             m_Container.Clear();
             m_GameplayTagInfoViewMap.Clear();
 
-            foreach (var gameplayTagInfo in m_EditData.GameplayTagEditInfos)
+            foreach (var gameplayTagInfo in m_TagData.GameplayTagInfos)
             {
                 AddGameplayTagInfoView(gameplayTagInfo.Name);
             }
             foreach (var tag in m_TagContainer.Tags)
             {
-                if (!m_EditData.Contains(tag))
+                if (!m_TagData.Contains(tag))
                 {
-                    AddMissingGameplayTagInfoView(tag);
+                    AddRuntimeGameplayTagInfoView(tag);
                 }
             }           
         }
@@ -137,8 +139,8 @@ namespace Taco.Gameplay.Editor
             var splitStrings = tag.Split('.');
             string lastPath = splitStrings[splitStrings.Length - 1];
 
-            GameplayTagInfoView gameplayTagInfoView = new GameplayTagInfoView(lastPath, tag, m_TagContainer.Is(tag));
-            gameplayTagInfoView.Expanded = m_EditData[tag].Expanded;
+            GameplayTagInfoView gameplayTagInfoView = new GameplayTagInfoView(lastPath, tag, m_TagContainer.ContainsTag(tag));
+            gameplayTagInfoView.Expanded = m_TagData[tag].Expanded;
             gameplayTagInfoView.OnExpandedStateChanged += () =>
             {
                 GameplayTagEditorUtility.SetExpandedState(tag, gameplayTagInfoView.Expanded);
@@ -156,29 +158,26 @@ namespace Taco.Gameplay.Editor
                 {
                     m_UndoHelper.Do(() =>
                     {
-                        if (!m_EditData[tag].Multi)
+                        var parentTags = GameplayTagUtility.GetParentTags(tag);
+                        for (int i = parentTags.Length - 1; i >= 0; i--)
                         {
-                            var parentTags = GameplayTagUtility.GetParentTags(tag);
-                            for (int i = parentTags.Length - 1; i >= 0; i--)
-                            {
-                                if (m_EditData[parentTags[i]].Multi)
-                                    break;
-                                else
-                                    m_TagContainer.RemoveTagWithChild(parentTags[i]);
-                            }
+                            if (m_TagData[parentTags[i]].Multi)
+                                break;
+                            else
+                                m_TagContainer.RemoveTagWithChild(m_TagData.NameToInfo(parentTags[i]));
                         }
-                        m_TagContainer.AddTag(tag);
+                        m_TagContainer.AddTag(m_TagData.NameToInfo(tag));
                     }, "Select Tag");
                 }
                 else
                 {
                     m_UndoHelper.Do(() => 
                     {
-                        m_TagContainer.RemoveTagWithChild(tag);
-                        var parentTags = GameplayTagUtility.GetParentTags(tag);
+                        m_TagContainer.RemoveTagWithChild(m_TagData.NameToInfo(tag));
+                        var parentTags = Gameplay.GameplayTagUtility.GetParentTags(tag);
                         foreach (var parentTag in parentTags)
                         {
-                            m_TagContainer.AddTag(parentTag);
+                            m_TagContainer.AddTag(m_TagData.NameToInfo(parentTag));
                         }
                     }, "Unselect Tag");
                 }
@@ -211,12 +210,12 @@ namespace Taco.Gameplay.Editor
                 if (i.newValue)
                     return;
 
-                var childTags = GameplayTagUtility.GetChildrenTags(tag, m_TagContainer.Tags);
+                var childTags = Gameplay.GameplayTagUtility.GetChildrenTags(tag, m_TagContainer.Tags);
                 List<string> probablyTags = new List<string>();
                 probablyTags.Add(tag);
                 foreach (var childTag in childTags)
                 {
-                    var middleTags = GameplayTagUtility.GetMiddleTags(tag, childTag);
+                    var middleTags = Gameplay.GameplayTagUtility.GetMiddleTags(tag, childTag);
                     foreach (var middleTag in middleTags)
                     {
                         if (!probablyTags.Contains(middleTag))
@@ -236,14 +235,14 @@ namespace Taco.Gameplay.Editor
                 {
                     m_UndoHelper.Do(() => 
                     {
-                        m_TagContainer.RemoveTag(tag);
+                        m_TagContainer.RemoveTag(m_TagData.NameToInfo(tag));
                         foreach (var probablyTag in probablyTags)
                         {
-                            m_TagContainer.RemoveTag(probablyTag);
+                            m_TagContainer.RemoveTag(m_TagData.NameToInfo(probablyTag));
                         }
-                        var parentTags = GameplayTagUtility.GetParentTags(tag);
+                        var parentTags = Gameplay.GameplayTagUtility.GetParentTags(tag);
                         if (parentTags.Length > 0)
-                            m_TagContainer.AddTag(parentTags[parentTags.Length - 1]);
+                            m_TagContainer.AddTag(m_TagData.NameToInfo(parentTags[parentTags.Length - 1]));
 
                     }, "Unselect Tag");
                 },
@@ -254,7 +253,7 @@ namespace Taco.Gameplay.Editor
                 gameplayTagInfoView.ToggleButton);
             };
 
-            gameplayTagInfoView.RepairButton.clicked += () => GameplayTagEditorUtility.EditorDataUndoHelper.Do(() => m_EditData.AddTag(tag), "Repair Tag");
+            gameplayTagInfoView.RepairButton.clicked += () => GameplayTagEditorUtility.DataUndoHelper.Do(() => m_TagData.AddTag(tag), "Repair Tag");
 
             if (splitStrings.Length == 1)
             {
@@ -276,11 +275,80 @@ namespace Taco.Gameplay.Editor
             m_GameplayTagInfoViewMap.Add(tag, gameplayTagInfoView);
             return gameplayTagInfoView;
         }
+        GameplayTagInfoView AddRuntimeGameplayTagInfoView(string tag)
+        {
+            var splitStrings = tag.Split('.');
+            string lastPath = splitStrings[splitStrings.Length - 1];
 
+            GameplayTagInfoView gameplayTagInfoView = new GameplayTagInfoView("(Runtime)" +lastPath, tag, m_TagContainer.ContainsTag(tag));
+            gameplayTagInfoView.Top.AddToClassList("runtime");
+            gameplayTagInfoView.Expanded = true;
+            gameplayTagInfoView.OnToggled = (i) =>
+            {
+                string tag = m_GameplayTagInfoViewMap.Reverse[gameplayTagInfoView];
+
+                if (i.newValue)
+                {
+                    m_UndoHelper.Do(() =>
+                    {
+                        if (!m_TagData[tag].Multi)
+                        {
+                            var parentTags = GameplayTagUtility.GetParentTags(tag);
+                            for (int i = parentTags.Length - 1; i >= 0; i--)
+                            {
+                                if (m_TagData[parentTags[i]].Multi)
+                                    break;
+                                else
+                                    m_TagContainer.RemoveTagWithChildRuntime(parentTags[i]);
+                            }
+                        }
+                        m_TagContainer.AddTag(m_TagData.NameToInfo(tag));
+                    }, "Select Tag");
+                }
+                else
+                {
+                    m_UndoHelper.Do(() =>
+                    {
+                        m_TagContainer.RemoveTagWithChildRuntime(tag);
+                        var parentTags = GameplayTagUtility.GetParentTags(tag);
+                        foreach (var parentTag in parentTags)
+                        {
+                            m_TagContainer.AddTagRuntime(parentTag);
+                        }
+                    }, "Unselect Tag");
+                }
+            };
+
+
+            if (splitStrings.Length == 1)
+            {
+                m_Container.Add(gameplayTagInfoView);
+                gameplayTagInfoView.AddToClassList("rootFolder");
+            }
+            else
+            {
+                string parentPath = tag.Substring(0, Mathf.Max(tag.Length - lastPath.Length - 1, 0));
+                if (m_GameplayTagInfoViewMap.TryGetValue(parentPath, out GameplayTagInfoView parentView))
+                    parentView.AddContent(gameplayTagInfoView);
+                else
+                    AddRuntimeGameplayTagInfoView(parentPath).AddContent(gameplayTagInfoView);
+            }
+            m_GameplayTagInfoViewMap.Add(tag, gameplayTagInfoView);
+            return gameplayTagInfoView;
+        }
+
+        void OnPlayModeChanged(PlayModeStateChange playModeStateChange)
+        {
+            Close();
+        }
         void UndoRedo()
         {
             Focus();
-            m_TagContainer?.OnValueChanged.Invoke();
+            if (!Application.isPlaying)
+            {
+                m_TagContainer.Init();
+                m_TagData.Init();
+            }
         }
 
         bool inited;

@@ -1,11 +1,15 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
+using UnityEditor.UIElements;
 using Unity.EditorCoroutines.Editor;
 using Taco.Editor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
+using System.IO;
+using System.Linq;
 
 namespace Taco.Gameplay.Editor
 {
@@ -25,8 +29,8 @@ namespace Taco.Gameplay.Editor
         FolderView m_RenamingFolderView;
         EditorCoroutine m_DoubleClickCoroutine;
 
-        GameplayTagEditData m_EditData => GameplayTagEditorUtility.GameplayTagEditData;
-        UndoHelper m_EditDataUndoHelper => GameplayTagEditorUtility.EditorDataUndoHelper;
+        GameplayTagData m_TagData => GameplayTagEditorUtility.GameplayTagData;
+        UndoHelper m_DataUndoHelper => GameplayTagEditorUtility.DataUndoHelper;
 
         public virtual void CreateGUI()
         {
@@ -44,17 +48,18 @@ namespace Taco.Gameplay.Editor
 
             m_Container = root.Q("tag-container");
 
-            m_EditData.Init();
-            m_EditData.OnValueChanged += PopulateView;
+            m_TagData.Init();
+            m_TagData.OnValueChanged += PopulateView;
             GameplayTagEditorUtility.RegisterUndo(UndoRedo);
-
+            EditorApplication.playModeStateChanged += OnPlayModeChanged;
             PopulateView();
             rootVisualElement.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
         }
         public virtual void OnDisable()
         {
             GameplayTagEditorUtility.UnregisterUndo(UndoRedo);
-            m_EditData.OnValueChanged -= PopulateView;
+            EditorApplication.playModeStateChanged -= OnPlayModeChanged;
+            m_TagData.OnValueChanged -= PopulateView;
         }
         public virtual void OnFocus()
         {
@@ -83,13 +88,15 @@ namespace Taco.Gameplay.Editor
                 Close();
             }
         }
-       
+
+        
+
         void PopulateView()
         {
             m_Container.Clear();
             m_GameplayTagInfoMap.Clear();
 
-            foreach (var gameplayTagEditInfo in m_EditData.GameplayTagEditInfos)
+            foreach (var gameplayTagEditInfo in m_TagData.GameplayTagInfos)
             {
                 string tag = gameplayTagEditInfo.Name;
                 var splitStrings = tag.Split('.');
@@ -148,7 +155,7 @@ namespace Taco.Gameplay.Editor
                         }
                     }
                 }));
-                folderView.Expanded = m_EditData[tag].Expanded;
+                folderView.Expanded = m_TagData[tag].Expanded;
                 folderView.OnExpandedStateChanged += () => GameplayTagEditorUtility.SetExpandedState(tag, folderView.Expanded);
 
                 if (splitStrings.Length == 1)
@@ -173,7 +180,7 @@ namespace Taco.Gameplay.Editor
                 WarningWindow.Show("Error", "Input is empty", m_AddTagButton);
                 return;
             }
-            else if (m_EditData.Contains(newTag))
+            else if (m_TagData.Contains(newTag))
             {
                 WarningWindow.Show("Error", "Name exists", m_AddTagButton);
                 return;
@@ -195,23 +202,48 @@ namespace Taco.Gameplay.Editor
             m_TagNameField.value = m_TagNameField.value.Replace('¡£', '.');
             m_TagNameField.value = m_TagNameField.value.Replace('/', '.');
 
-            m_EditDataUndoHelper.Do(() => m_EditData.AddTag(m_TagNameField.value), "Add Tag");
+            m_DataUndoHelper.Do(() => m_TagData.AddTag(m_TagNameField.value), "Add Tag");
         }
         void RemoveTagWithoutChildren(string tagToRemove)
         {
-            m_EditDataUndoHelper.Do(() => m_EditData.RemoveTagWithoutChildren(tagToRemove), "Remove Tag");
+            originalScenePath = SceneManager.GetActiveScene().path;
+
+            VisualElement dialogueContext = new VisualElement();
+
+            DrawReferenceView(dialogueContext, new List<GameplayTagInfo>() { m_TagData.NameToInfo(tagToRemove) });
+            m_TagData.OnReferenceChanged += Draw;
+            dialogueContext.RegisterCallbackOnce<DetachFromPanelEvent>((i) => m_TagData.OnReferenceChanged -= Draw);
+
+            WarningWindow.Show("Confirm to remove".ToUpper(), dialogueContext, () =>
+            {
+                m_DataUndoHelper.Do(() => m_TagData.RemoveTagWithoutChildren(tagToRemove), "Remove Tag");
+            }, null, GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
+
+            void Draw()
+            {
+                DrawReferenceView(dialogueContext, new List<GameplayTagInfo>() { m_TagData.NameToInfo(tagToRemove) });
+            }
         }
         void RemoveTag(string tagToRemove)
         {
-            string dialogContext = string.Empty;
+            originalScenePath = SceneManager.GetActiveScene().path;
 
-            List<GameplayTagEditInfo> childTags = m_EditData.GetChildTagInfos(tagToRemove, true);
-            childTags.ForEach(i => dialogContext += i.Name + "\n");
+            VisualElement dialogueContext = new VisualElement();
 
-            WarningWindow.Show("Confirm to remove".ToUpper(), dialogContext, () =>
+            List<GameplayTagInfo> childTags = m_TagData.GetChildTagInfos(tagToRemove, true);
+            DrawReferenceView(dialogueContext, childTags);
+            m_TagData.OnReferenceChanged += Draw;
+            dialogueContext.RegisterCallbackOnce<DetachFromPanelEvent>((i) => m_TagData.OnReferenceChanged -= Draw);
+
+            WarningWindow.Show("Confirm to remove".ToUpper(), dialogueContext, () =>
             {
-                m_EditDataUndoHelper.Do(() => m_EditData.RemoveTag(tagToRemove), "Remove Tag");
+                m_DataUndoHelper.Do(() => m_TagData.RemoveTag(tagToRemove), "Remove Tag");
             }, null, GUIUtility.GUIToScreenPoint(Event.current.mousePosition));
+
+            void Draw()
+            {
+                DrawReferenceView(dialogueContext, childTags);
+            }
         }
         void ChangeTag()
         {
@@ -232,7 +264,7 @@ namespace Taco.Gameplay.Editor
                 return;
             }
             string newTag = oldTag.Remove(oldTag.Length - oldShortTag.Length,oldShortTag.Length) + newShortTag;
-            m_EditDataUndoHelper.Do(() => m_EditData.ChangeTag(oldTag, newTag, newShortTag), "Change Tag");
+            m_DataUndoHelper.Do(() => m_TagData.ChangeTag(oldTag, newTag, newShortTag), "Change Tag");
         }
         void MoveTag(FolderView folderView)
         {
@@ -241,16 +273,16 @@ namespace Taco.Gameplay.Editor
             {
                 return;
             }
-            else if (m_EditData.GetChildTagInfos(m_MovingTag, false).Find(i => i.Name == targetParentTag) is GameplayTagEditInfo gameplayTagEditInfo)
+            else if (m_TagData.GetChildTagInfos(m_MovingTag, false).Find(i => i.Name == targetParentTag) is GameplayTagInfo gameplayTagEditInfo)
             {
                 WarningWindow.Show("Error", "Cannot move to child", folderView);
                 return;
             }
-            m_EditDataUndoHelper.Do(() => m_EditData.MoveTag(m_MovingTag, targetParentTag), "Move Tag");
+            m_DataUndoHelper.Do(() => m_TagData.MoveTag(m_MovingTag, targetParentTag), "Move Tag");
         }
         void MoveToRoot(string movingTag)
         {
-            m_EditDataUndoHelper.Do(() => m_EditData.MoveToRoot(movingTag), "Move to Root");
+            m_DataUndoHelper.Do(() => m_TagData.MoveToRoot(movingTag), "Move to Root");
         }
 
         void StopMoving()
@@ -277,6 +309,11 @@ namespace Taco.Gameplay.Editor
             yield return new EditorWaitForSeconds(timer);
             m_Clicked = false;
         }
+
+        void OnPlayModeChanged(PlayModeStateChange playModeStateChange)
+        {
+            Close();
+        }
         void UndoRedo()
         {
             Focus();
@@ -299,6 +336,113 @@ namespace Taco.Gameplay.Editor
                 }
             });
         }
+
+        string originalScenePath;
+        void DrawReferenceView(VisualElement context, List<GameplayTagInfo> tags)
+        {
+            bool DrawValid(string globalObjectIdStr, VisualElement container,bool byScene)
+            {
+                GlobalObjectId.TryParse(globalObjectIdStr, out GlobalObjectId globalObjectId);
+                Object target = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(globalObjectId);
+                if (target != null)
+                {
+                    ObjectField objectField = new ObjectField(byScene ? "used by scene Object: " : "used by: ");
+                    objectField.value = target;
+                    container.Add(objectField);
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            context.Clear();
+            foreach (GameplayTagInfo tag in tags)
+            {
+                VisualElement tagView = new VisualElement();
+                tagView.name = tag.Name;
+                tagView.Add(new Label(tag.Name));
+                context.Add(tagView);
+
+                List<string> invaildReferences = new List<string>();
+                List<string> referenceScenes = new List<string>();
+
+                foreach (var reference in tag.Reference)
+                {
+                    var splits = reference.Split('/');
+                    string globalObjectIdStr = splits[0];
+
+                    splits = reference.Split('-');
+                    bool isScene = int.Parse(splits[1]) == 2;
+                    if (isScene)
+                    {
+                        string sceneGuid = splits[2];
+                        string scenePath = AssetDatabase.GUIDToAssetPath(sceneGuid);
+                        string sceneFilePath = Application.dataPath.Substring(0, Application.dataPath.Length - 6) + scenePath;
+
+                        splits = scenePath.Split('/');
+                        string sceneName = splits[splits.Length - 1].Split('.')[0];
+                        if (!File.Exists(sceneFilePath))
+                        {
+                            invaildReferences.Add(reference);
+                        }
+                        else if (SceneManager.GetActiveScene().name == sceneName)
+                        {
+                            VisualElement sceneView = tagView.Q(sceneName);
+                            if (sceneView == null)
+                            {
+                                sceneView = new VisualElement();
+                                sceneView.name = sceneName;
+                                tagView.Insert(1, sceneView);
+                            }
+                            if (!DrawValid(globalObjectIdStr, sceneView, true))
+                            {
+                                invaildReferences.Add(reference);
+                            }
+                            if(SceneManager.GetActiveScene().path != originalScenePath)
+                            {
+                                Button closeSceneButton = new Button();
+                                closeSceneButton.text = "CloseScene";
+                                closeSceneButton.clicked += () =>
+                                {
+                                    EditorSceneManager.OpenScene(originalScenePath);
+                                    DrawReferenceView(context, tags);
+                                };
+                                sceneView.Add(closeSceneButton);
+                            }
+                        }
+                        else if (!referenceScenes.Contains(scenePath))
+                        {
+                            referenceScenes.Add(scenePath);
+                        }
+                    }
+                    else if (!DrawValid(globalObjectIdStr, tagView, false))
+                    {
+                        invaildReferences.Add(reference);
+                    }
+                }
+
+                foreach (var referenceScene in referenceScenes)
+                {
+                    var splits = referenceScene.Split('/');
+                    string sceneName = splits[splits.Length - 1].Split('.')[0];
+
+                    Button openSceneButton = new Button();
+                    openSceneButton.text = $"used by: {sceneName},Open->";
+                    openSceneButton.clicked += () =>
+                    {
+                        EditorSceneManager.OpenScene(referenceScene);
+                        DrawReferenceView(context, tags);
+                    };
+                    tagView.Add(openSceneButton);
+                }
+
+                invaildReferences.ForEach(r => tag.Reference.Remove(r));
+            }
+        }
+
 
 
         [MenuItem("Tools/Gameplay/GameplayTagEditWindow", false, 0)]

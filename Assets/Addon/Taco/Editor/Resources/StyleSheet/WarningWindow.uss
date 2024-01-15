@@ -61,3 +61,8 @@
     background-color: rgb(188, 188, 188);
     color: rgb(32, 32, 32);
 }
+
+.unity-button:active {
+    background-color: rgba(32, 32, 32, 0);
+    color: rgb(188, 188, 188);
+}

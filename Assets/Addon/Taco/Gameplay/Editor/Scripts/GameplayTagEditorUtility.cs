@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEditor;
 using Taco.Editor;
@@ -6,16 +7,14 @@ namespace Taco.Gameplay.Editor
 {
     public static class GameplayTagEditorUtility
     {
-        const string DefaultFolderGUID = "66b22ea9618232b48ae451c07e6594bb";
-
-        static GameplayTagEditData s_GameplayTagEditData;
-        public static GameplayTagEditData GameplayTagEditData
+        const string DataPath = "Assets/Resources";
+        public static GameplayTagData GameplayTagData
         {
             get
             {
-                if(s_GameplayTagEditData == null)
+                if (GameplayTagUtility.GameplayTagData == null)
                     Init();
-                return s_GameplayTagEditData;
+                return GameplayTagUtility.GameplayTagData;
             }
         }
 
@@ -24,56 +23,58 @@ namespace Taco.Gameplay.Editor
 
 
         static int s_UndoListener;
-        public static UndoHelper EditorDataUndoHelper { get; private set; }
+        public static UndoHelper DataUndoHelper { get; private set; }
 
         static void Init()
         {
-            string gameplayTagEditInfoPath = AssetDatabase.GUIDToAssetPath(DefaultFolderGUID) + "/GameplayTagEditData.asset";
-            s_GameplayTagEditData = AssetDatabase.LoadAssetAtPath(gameplayTagEditInfoPath, typeof(GameplayTagEditData)) as GameplayTagEditData;
-            if (s_GameplayTagEditData == null)
+            GameplayTagUtility.GameplayTagData = Resources.Load<GameplayTagData>("GameplayTagData");
+            if (GameplayTagUtility.GameplayTagData == null)
             {
-                s_GameplayTagEditData = ScriptableObject.CreateInstance<GameplayTagEditData>();
-                AssetDatabase.CreateAsset(s_GameplayTagEditData, gameplayTagEditInfoPath);
+                if (!Directory.Exists(DataPath))
+                    Directory.CreateDirectory(DataPath);
+
+                GameplayTagUtility.GameplayTagData = ScriptableObject.CreateInstance<GameplayTagData>();
+                AssetDatabase.CreateAsset(GameplayTagData, $"{DataPath}/GameplayTagData.asset");
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
-            s_GameplayTagEditData.Init();
+            GameplayTagUtility.GameplayTagData.Init();
         }
 
         public static void RegisterUndo(System.Action onUndoCallback)
         {
-            if(s_UndoListener == 0)
-                EditorDataUndoHelper = new UndoHelper("GameplayTagEditData", s_GameplayTagEditData, OnUndo);
+            if (s_UndoListener == 0)
+                DataUndoHelper = new UndoHelper("GameplayTagEditData", OnUndo, GameplayTagData);
 
             s_UndoListener++;
             if (onUndoCallback != null)
-                EditorDataUndoHelper.OnUndoCallback += onUndoCallback;
+                DataUndoHelper.OnUndoCallback += onUndoCallback;
         }
         public static void UnregisterUndo(System.Action onUndoCallback)
         {
-            if (EditorDataUndoHelper == null)
+            if (DataUndoHelper == null)
                 return;
 
             s_UndoListener--;
             if (onUndoCallback != null)
-                EditorDataUndoHelper.OnUndoCallback -= onUndoCallback;
+                DataUndoHelper.OnUndoCallback -= onUndoCallback;
 
             if (s_UndoListener == 0)
-                EditorDataUndoHelper.Dispose();
+                DataUndoHelper.Dispose();
         }
         static void OnUndo()
         {
-            s_GameplayTagEditData.Init();
+            GameplayTagData.Init();
         }
 
 
         public static void SetExpandedState(string name, bool state)
         {
-            s_GameplayTagEditData.SetExpandedState(name, state);
+            GameplayTagData.SetExpandedState(name, state);
         }
         public static void SetMultiState(string name, bool state)
         {
-            EditorDataUndoHelper.Do(() => s_GameplayTagEditData.SetMultiState(name, state), "Change Multi State");
+            DataUndoHelper.Do(() => GameplayTagData.SetMultiState(name, state), "Change Multi State");
         }
     }
 }

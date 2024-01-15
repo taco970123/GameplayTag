@@ -7,14 +7,46 @@ using UnityEngine;
 namespace Taco.Gameplay
 {
     [Serializable]
-    public class GameplayTagContainer
+    public partial class GameplayTagContainer
     {
-        public List<string> Tags = new List<string>();
+        public List<string> TagGuids = new List<string>();
+        public string ReferencePath = "CustomData";
+
+        List<string> m_Tags;
+        public List<string> Tags
+        {
+            get
+            {
+                if(m_Tags == null)
+                    Init();
+                return m_Tags;
+            }
+            set => m_Tags = value;
+        }
 
         public Action OnValueChanged;
-        public void AddTag(string tag)
+        GameplayTagData m_GameplayTagData => GameplayTagUtility.GameplayTagData;
+
+        public void Init()
         {
-            if (!Is(tag))
+            m_Tags = new List<string>();
+            for (int i = TagGuids.Count - 1; i >= 0; i--)
+            {
+                string tagGuid = TagGuids[i];
+                string tag = m_GameplayTagData.GuidToName(tagGuid);
+                if (!string.IsNullOrEmpty(tag))
+                    m_Tags.Add(tag);
+#if UNITY_EDITOR
+                //else
+                //    TagGuids.RemoveAt(i);
+#endif
+            }
+            OnValueChanged?.Invoke();
+        }
+
+        public void AddTagRuntime(string tag)
+        {
+            if (!ContainsTag(tag))
             {
                 for (int i = Tags.Count - 1; i >= 0; i--)
                 {
@@ -22,15 +54,10 @@ namespace Taco.Gameplay
                         Tags.RemoveAt(i);
                 }
                 Tags.Add(tag);
-
-#if UNITY_EDITOR
-                Tags = Tags.OrderBy(tag => tag).ToList();
-#endif
-
                 OnValueChanged?.Invoke();
             }
         }
-        public void RemoveTag(string tag)
+        public void RemoveTagRuntime(string tag)
         {
             if (Tags.Contains(tag))
             {
@@ -38,41 +65,41 @@ namespace Taco.Gameplay
                 OnValueChanged?.Invoke();
             }
         }
-        public void RemoveTagWithChild(string tag)
+        public void RemoveTagWithChildRuntime(string tag)
         {
             for (int i = Tags.Count - 1; i >= 0; i--)
             {
                 if (Tags[i].StartTagIs(tag))
-                    RemoveTag(Tags[i]);
+                    RemoveTagRuntime(Tags[i]);
             }
         }
-        public void ClearTags()
+        public void ClearTagRuntime()
         {
             Tags.Clear();
             OnValueChanged?.Invoke();
         }
 
-        public bool Is(string tag)
+        public bool ContainsTag(string tag)
         {
-            return Tags.Contains(tag) || HasChild(tag);
+            return Tags.Contains(tag) || HasChildTag(tag);
         }
-        public bool Is(IEnumerable<string> requiredTags)
+        public bool ContainsTags(IEnumerable<string> requiredTags)
         {
             if (requiredTags.Count() == 0)
                 return false;
 
             foreach (var requiredTag in requiredTags)
             {
-                if (!Is(requiredTag))
+                if (!ContainsTag(requiredTag))
                     return false;
             }
             return true;
         }
-        public bool Is(GameplayTagContainer selector)
+        public bool Contains(GameplayTagContainer selector)
         {
-            return Is(selector.Tags);
+            return ContainsTags(selector.Tags);
         }
-        public bool HasChild(string parentTag)
+        public bool HasChildTag(string parentTag)
         {
             foreach (var tag in Tags)
             {

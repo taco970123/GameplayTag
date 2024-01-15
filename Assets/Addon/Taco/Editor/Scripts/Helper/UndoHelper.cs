@@ -6,31 +6,34 @@ namespace Taco.Editor
     public class UndoHelper
     {
         public string GroupName;
-        public UnityEngine.Object Owner;
+        public UnityEngine.Object[] Owners;
         public event Action OnUndoCallback;
         
         public string LastUndoName;
 
-        public UndoHelper(string groupName, UnityEngine.Object owner, Action onUndoCallback)
+        public UndoHelper(string groupName, Action onUndoCallback, params UnityEngine.Object[] owners)
         {
             GroupName = groupName;
-            Owner = owner;
+            Owners = owners;
             OnUndoCallback = onUndoCallback;
             Undo.undoRedoEvent += OnUndoRedoEvent;
         }
         public void Dispose()
         {
-            Undo.ClearUndo(Owner);
+            foreach (var owner in Owners)
+            {
+                Undo.ClearUndo(owner);
+            }
             Undo.undoRedoEvent -= OnUndoRedoEvent;
         }
-
-
-
         public void Do(Action action,string actionName)
         {
-            Undo.RegisterCompleteObjectUndo(Owner, $"{GroupName}: {actionName}");
+            Undo.RegisterCompleteObjectUndo(Owners, $"{GroupName}: {actionName}");
             action?.Invoke();
-            EditorUtility.SetDirty(Owner);
+            foreach (var owner in Owners)
+            {
+                EditorUtility.SetDirty(owner);
+            }
         }
 
         bool IsThis()
@@ -45,11 +48,14 @@ namespace Taco.Editor
                 OnUndoCallback?.Invoke();
         }
 
-        public static void Do(UnityEngine.Object owner, Action action, string actionName)
+        public static void Do(Action action, string actionName,params UnityEngine.Object[] owners)
         {
-            Undo.RegisterCompleteObjectUndo(owner, actionName);
+            Undo.RegisterCompleteObjectUndo(owners, actionName);
             action?.Invoke();
-            EditorUtility.SetDirty(owner);
+            foreach (var owner in owners)
+            {
+                EditorUtility.SetDirty(owner);
+            }
         }
     }
 }
